@@ -3,6 +3,16 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Output directories - ignore contents but keep directories
+output/scraped/*
+!output/scraped/.gitkeep
+output/logs/*
+!output/logs/.gitkeep
+output/test/*
+!output/test/.gitkeep
+output/debug/*
+!output/debug/.gitkeep
+
 # C extensions
 *.so
 
