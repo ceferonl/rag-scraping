@@ -1,0 +1,36 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+- **Default setup for uv-based Python projects:**
+  - Only these files should be present for dependency and tool management:
+    - `pyproject.toml` (all dependencies, tool configs, and ruff config under `[tool.ruff]`)
+    - `uv.lock` (lockfile, always present)
+  - Do **not** use `requirements.lock` (legacy, not needed with uv)
+  - Do **not** use `ruff.toml` (put ruff config in `pyproject.toml` under `[tool.ruff]`)
+  - Example ruff config in `pyproject.toml`:
+    ```toml
+    [tool.ruff]
+    line-length = 88
+    exclude = [".venv", "output"]
+    ```
+- **Always use `uv add <package>` to add dependencies**
+  - This ensures dependencies are tracked in pyproject.toml and lock file is updated
+  - Example:
+    ```bash
+    uv add polars
+    uv add crawl4ai
+    uv add pytest --dev
+    ```
+- **Do NOT use `uv pip install <package>` for adding dependencies**
+  - `uv pip install` is for ad-hoc installs and does not update pyproject.toml
+  - Example (anti-pattern):
+    ```bash
+    uv pip install polars  # ❌ Don't do this
+    ```
+- **Rationale:**
+  - Keeps dependency management consistent and reproducible
+  - Ensures lock file and pyproject.toml are always in sync
+- **See also:**
+  - [uv documentation](mdc:https:/github.com/astral-sh/uv)

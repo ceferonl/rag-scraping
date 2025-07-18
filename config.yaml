@@ -1,0 +1,45 @@
+# RAG Scraping Configuration
+# This file contains all configuration settings for the scraping pipeline
+
+scraping:
+  base_url: "https://www.versnellingsplan.nl/Kennisbank/"
+  request_delay: 1.0
+  min_delay: 0.5
+  max_delay: 2.0
+  max_retries: 3
+  timeout: 30
+  user_agent: "RAG-Scraper/1.0"
+  retry_delays: [1, 2, 5]
+
+pdf:
+  download_timeout: 30
+  max_retries: 3
+  user_agent: "RAG-Scraper/1.0"
+
+output:
+  # Base directories for different run types
+  demo_base_dir: "output/demo"
+  main_base_dir: "output/main"
+
+  # Subdirectories (will be created relative to base_dir)
+  pdfs_subdir: "pdfs"
+  images_subdir: "pdfs/images"
+
+  # File naming
+  timestamp_format: "%Y%m%d_%H%M%S"
+
+  # Default run type
+  default_run_type: "demo"  # "demo" or "main"
+
+rag:
+  min_chunk_size: 50
+  max_chunk_size: 2000
+  target_chunk_size: 1500
+  remove_phrases:
+    - "Download de presentatie hier"
+    - "Deel deze pagina"
+    - "Deze website maakt gebruik van cookies. Lees hier over onze Coookies"
+
+logging:
+  level: "INFO"
+  format: "[%(asctime)s] %(levelname)s %(name)s: %(message)s"

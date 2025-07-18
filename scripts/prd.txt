@@ -1,0 +1,187 @@
+<context>
+# Overview
+The RAG Scraping project is designed to extract and process content from the Versnellingsplan knowledge base. This tool serves as the data collection and preprocessing phase of a larger Retrieval-Augmented Generation (RAG) system. It allows users to efficiently extract structured content from the knowledge base, including metadata, main content, and associated files, enabling further analysis and usage of the information in AI applications.
+
+# Core Features
+1. **Main Page Scraping**: Extract basic metadata (titles, URLs, types) from the main knowledge base page
+   - Fast initial scanning of available content
+   - Provides overview of all available items
+   - Uses asynchronous requests for efficiency
+
+2. **Detailed Item Scraping**: Extract comprehensive information from individual items
+   - Captures metadata (date, zones, categories)
+   - Extracts main text content
+   - Identifies and extracts associated files
+   - Preserves content structure
+
+3. **Toggle Content Extraction**: Special handling for collapsible/toggle content sections
+   - Captures hidden content that requires special handling
+   - Preserves section titles and structure
+   - Ensures complete content extraction
+
+4. **Structured Data Output**: Save scraped content in structured JSON format
+   - Consistent data model for all extracted content
+   - Support for serialization to various formats
+   - Organized by item with associated metadata
+
+# User Experience
+The primary users are developers and data scientists building RAG systems who need high-quality data from the Versnellingsplan knowledge base.
+
+- **Data Engineer Persona**: Needs to collect data efficiently with minimal manual intervention
+- **Data Scientist Persona**: Requires clean, structured data with preserved metadata for analysis
+- **RAG Developer Persona**: Needs content in a format suitable for ingestion into vector databases
+
+Key user flows include:
+1. Scanning the entire knowledge base for available content
+2. Analyzing item distribution by type and category
+3. Extracting detailed content from specific items of interest
+4. Processing and saving results for downstream applications
+</context>
+<PRD>
+# Technical Architecture
+## System Components
+1. **Core Scraper Module**
+   - `VersnellingsplanScraper` class as the main entry point
+   - `KnowledgeBaseItem` data class for storing structured item data
+   - Asynchronous crawling engine leveraging `AsyncWebCrawler` from crawl4ai
+   - HTML parsing using BeautifulSoup
+
+2. **Content Extraction Components**
+   - Main page metadata extraction
+   - Detailed item content extraction
+   - Toggle/dropdown content extraction
+   - Metadata parsing (dates, zones, categories)
+
+3. **Output & Serialization**
+   - JSON serialization with proper date formatting
+   - Statistics generation for scraping results
+   - Structured directory organization for outputs
+
+## Data Models
+1. **KnowledgeBaseItem**
+   - `title`: String - The title of the item
+   - `url`: String - The URL of the item
+   - `date`: DateTime - Publication date (optional)
+   - `item_type`: String - Type of item (Publicatie, Product, Project)
+   - `main_content`: String - The main textual content
+   - `associated_files`: List[String] - URLs of associated files
+   - `zones`: List[String] - Zones categorizing the item
+   - `type_innovatie`: List[String] - Innovation types
+
+## APIs and Integration Points
+1. **Crawler Integration**
+   - Interface with `AsyncWebCrawler` for HTTP requests
+   - HTML parsing with BeautifulSoup
+   - Asynchronous programming with asyncio
+
+2. **Export APIs**
+   - Methods for saving data to JSON files
+   - Support for generating statistics
+   - Directory structure management
+
+## Infrastructure Requirements
+- Python 3.10+ runtime
+- Key dependencies: crawl4ai, BeautifulSoup4, nest_asyncio
+- Async I/O support for efficient processing
+- File system access for saving results
+
+# Development Roadmap
+## Phase 1: Core Functionality Enhancement
+1. Fix the Jupyter notebook to correctly scrape items
+   - Ensure the notebook can run from start to finish
+   - Fix syntax errors in scrape_specific_item function
+   - Make sure proper handling of toggles is implemented
+
+2. Improve main page scraping performance
+   - Complete the scrape_main_page_only method
+   - Add option to limit detailed scraping for better performance
+   - Proper error handling during scraping
+
+3. Enhance toggle content extraction
+   - Implement specialized toggle content extraction
+   - Preserve section headers and structure
+   - Handle different toggle element types
+
+## Phase 2: Usability and Interface Improvements
+1. Enhanced command-line interface
+   - Configurable output paths
+   - Filter options for item types
+   - Verbosity levels for logging
+
+2. Progress reporting
+   - Real-time progress updates
+   - Detailed logs for debugging
+   - Summary statistics after completion
+
+3. Data validation
+   - Input validation for URLs
+   - Output validation for extracted data
+   - Handling of malformed or missing data
+
+## Phase 3: Advanced Features
+1. Pagination support
+   - Handle knowledge base with multiple pages
+   - Maintain consistent data structure across pages
+   - Support for resume functionality
+
+2. Intelligent content extraction
+   - Better handling of complex layouts
+   - Improved text cleanup and formatting
+   - Advanced metadata extraction
+
+3. Export format options
+   - Support for multiple output formats (CSV, Markdown)
+   - Direct output to vector database formats
+   - Configurable serialization options
+
+# Logical Dependency Chain
+1. **Foundation Components** (Build First)
+   - Fix notebook functionality
+   - Implement working scrape_main_page_only method
+   - Complete toggle content extraction
+
+2. **Core User Experience**
+   - Ensure proper error handling
+   - Add progress reporting
+   - Implement data validation
+
+3. **Advanced Capabilities**
+   - Add pagination support
+   - Enhance content extraction algorithms
+   - Support additional export formats
+
+# Risks and Mitigations
+## Technical Challenges
+- **Risk**: Website structure changes could break scrapers
+  - **Mitigation**: Implement modular extractors that can be updated independently
+  - **Mitigation**: Add comprehensive test cases to detect structure changes
+
+- **Risk**: Large-scale scraping could trigger rate limiting
+  - **Mitigation**: Implement configurable delays between requests
+  - **Mitigation**: Support for resumable scraping operations
+
+- **Risk**: Complex DOM structures might be difficult to parse
+  - **Mitigation**: Specialized extractors for different content types
+  - **Mitigation**: Fallback mechanisms for content extraction
+
+## Resource Constraints
+- **Risk**: Memory usage for large-scale scraping
+  - **Mitigation**: Implement streaming processing where possible
+  - **Mitigation**: Support for batched processing of items
+
+- **Risk**: Processing time for detailed extraction
+  - **Mitigation**: Optional limited scraping for faster results
+  - **Mitigation**: Parallel processing where appropriate
+
+# Appendix
+## Target Site Analysis
+- Versnellingsplan knowledge base has three main item types: Publicatie, Product, and Project
+- Toggle content is present in some detailed pages and requires special handling
+- Associated files are mainly PDFs and Office documents
+- Dates are formatted in Dutch and require special parsing
+
+## Testing Strategy
+- Unit tests for each extraction component
+- Integration tests simulating full scraping operations
+- Manual verification of complex pages with toggles
+</PRD>

@@ -4,16 +4,19 @@ A Python-based web scraping tool designed to extract and process content from th
 
 ## Features
 
-- Asynchronous web scraping using `aiohttp`
+- Asynchronous web scraping using `crawl4ai`
 - Structured data extraction from Versnellingsplan knowledge base
 - Support for extracting:
   - Main content
   - Publication dates
   - Zones
   - Item types
-  - Associated files
+  - Associated files (PDFs, videos, pictures)
+- Command-line interface with configurable options
+- Data validation using Pydantic models
+- PDF content extraction and processing
+- Multiple export formats (JSON, CSV, Markdown)
 - Comprehensive test suite with unit and integration tests
-- Configurable output formats
 
 ## Installation
 
@@ -25,7 +28,12 @@ cd rag-scraping
 
 2. Install dependencies:
 ```bash
-uv pip install .
+uv sync
+```
+
+3. Install additional dependencies for PDF processing (optional):
+```bash
+uv add unstructured
 ```
 
 ## Usage
@@ -33,7 +41,7 @@ uv pip install .
 ### Basic Usage
 
 ```python
-from rag_scraping.versnellingsplan import VersnellingsplanScraper
+from rag_scraping.pages import VersnellingsplanScraper
 
 # Initialize the scraper
 scraper = VersnellingsplanScraper()
@@ -46,6 +54,24 @@ for item in items:
     print(f"Title: {item.title}")
     print(f"URL: {item.url}")
     print(f"Content: {item.main_content[:200]}...")
+```
+
+### CLI Usage
+
+The project includes a command-line interface for easy usage:
+
+```bash
+# Scrape main page items only
+python -m rag_scraping.pages --output-dir output/main --max-items 10
+
+# Scrape main page + detailed items with validation
+python -m rag_scraping.pages --output-dir output/detailed --max-items 5 --max-details 3 --validate
+
+# Process PDFs from detailed items
+python -m rag_scraping.pdfs --input-file output/detailed/detailed_items.json --output-dir output/pdfs
+
+# Export to different formats
+python -m rag_scraping.pages --output-dir output --export csv,markdown
 ```
 
 ### Saving Results
@@ -75,7 +101,8 @@ rag-scraping/
 ├── src/
 │   └── rag_scraping/
 │       ├── __init__.py
-│       ├── versnellingsplan.py      # Main scraper implementation
+│       ├── pages.py                 # Main scraper implementation
+│       ├── pdfs.py                  # PDF processing module
 │       └── knowledge_base_item.py   # Data model for scraped items
 ├── tests/
 │   ├── conftest.py                  # Shared test fixtures
