@@ -25,28 +25,17 @@ def clean_text_for_rag(text: str) -> str:
     if not text:
         return ""
 
-    # Normalize quotes and problematic characters
-    text = text.replace('"', '"').replace('"', '"')
-    text = text.replace(''', "'").replace(''', "'")
+    # Remove all quotes
+    text = text.replace('"', '')
+    text = text.replace("'", '')
     text = text.replace('\\', '/')
     text = text.replace('\t', ' ')
-
-    # Remove escaped quotes (both single and double)
-    text = text.replace('\\"', '"')
-    text = text.replace("\\'", "'")
-
-    # Normalize newlines
+    text = text.replace('\\"', '')
+    text = text.replace("\\'", '')
     text = text.replace('\r\n', '\n').replace('\r', '\n')
-
-    # Replace all newlines with spaces (for RAG, we want continuous text)
     text = text.replace('\n', ' ')
-
-    # Remove excessive whitespace
     text = re.sub(r' +', ' ', text)  # Multiple spaces to single
-
-    # Clean up and strip
     text = text.strip()
-
     return text
 
 

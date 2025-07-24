@@ -42,7 +42,7 @@ def get_output_paths(config: Dict[str, Any], run_type: str = None) -> Dict[str, 
 
     Args:
         config: Configuration dictionary
-        run_type: Run type ("demo" or "main"). If None, uses default from config.
+        run_type: Run type ("demo" or "production"). If None, uses default from config.
 
     Returns:
         Dictionary of output paths
@@ -50,8 +50,8 @@ def get_output_paths(config: Dict[str, Any], run_type: str = None) -> Dict[str, 
     if run_type is None:
         run_type = config['output']['default_run_type']
 
-    if run_type not in ['demo', 'main']:
-        raise ValueError(f"Invalid run_type: {run_type}. Must be 'demo' or 'main'")
+    if run_type not in ['demo', 'production']:
+        raise ValueError(f"Invalid run_type: {run_type}. Must be 'demo' or 'production'")
 
     # Get base directory for this run type
     base_dir_key = f"{run_type}_base_dir"
@@ -106,7 +106,7 @@ def validate_config(config: Dict[str, Any]) -> None:
 
     # Validate output configuration
     output_config = config['output']
-    required_output_keys = ['demo_base_dir', 'main_base_dir', 'pdfs_subdir', 'images_subdir']
+    required_output_keys = ['demo_base_dir', 'production_base_dir', 'pdfs_subdir', 'images_subdir']
 
     for key in required_output_keys:
         if key not in output_config:
@@ -114,8 +114,8 @@ def validate_config(config: Dict[str, Any]) -> None:
 
     # Validate run type
     default_run_type = output_config.get('default_run_type', 'demo')
-    if default_run_type not in ['demo', 'main']:
-        raise ValueError(f"Invalid default_run_type: {default_run_type}. Must be 'demo' or 'main'")
+    if default_run_type not in ['demo', 'production']:
+        raise ValueError(f"Invalid default_run_type: {default_run_type}. Must be 'demo' or 'production'")
 
 
 # Convenience function for common configuration loading

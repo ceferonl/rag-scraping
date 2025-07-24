@@ -16,7 +16,6 @@ from src.rag_scraping.utils import clean_text_for_rag, format_date, create_chunk
 from src.rag_scraping.rag_chunking import create_rag_chunks, create_chunk_dict, merge_small_chunks
 from src.rag_scraping.scraping import extract_main_content, extract_associated_files, scrape_main_page
 from src.rag_scraping.pipeline import setup_logging, run_demo_pipeline
-from src.rag_scraping.pdf_processing import process_pdfs_from_items
 
 
 class TestConfiguration:
@@ -40,13 +39,13 @@ class TestConfiguration:
         assert paths["pdfs_dir"].name == "pdfs"
         assert paths["images_dir"].name == "images"
 
-    def test_get_output_paths_main(self):
-        """Test main output paths."""
+    def test_get_output_paths_production(self):
+        """Test production output paths."""
         config = load_config("config.yaml")
-        paths = get_output_paths(config, "main")
+        paths = get_output_paths(config, "production")
 
-        assert paths["run_type"] == "main"
-        assert "main" in str(paths["base_dir"])
+        assert paths["run_type"] == "production"
+        assert "production" in str(paths["base_dir"])
         assert paths["pdfs_dir"].name == "pdfs"
         assert paths["images_dir"].name == "images"
 

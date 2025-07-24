@@ -45,7 +45,7 @@ Examples:
   python -m rag_scraping --process-pdfs detailed_items_20250718_123456.json
 
   # Use custom config and run type
-  python -m rag_scraping --config my_config.yaml --run-type main --demo
+  python -m rag_scraping --config my_config.yaml --run-type production --demo
         """
     )
 
@@ -57,8 +57,8 @@ Examples:
     )
     parser.add_argument(
         '--run-type',
-        choices=['main', 'demo'],
-        help='Run type (demo or main). Overrides config default.'
+        choices=['production', 'demo'],
+        help='Run type (demo or production). Overrides config default.'
     )
 
     # Pipeline modes (mutually exclusive)

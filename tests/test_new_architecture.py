@@ -38,13 +38,13 @@ class TestConfiguration:
         assert paths["pdfs_dir"].name == "pdfs"
         assert paths["images_dir"].name == "images"
 
-    def test_get_output_paths_main(self):
-        """Test main output paths."""
+    def test_get_output_paths_production(self):
+        """Test production output paths."""
         config = load_config("config.yaml")
-        paths = get_output_paths(config, "main")
+        paths = get_output_paths(config, "production")
 
-        assert paths["run_type"] == "main"
-        assert "main" in str(paths["base_dir"])
+        assert paths["run_type"] == "production"
+        assert "production" in str(paths["base_dir"])
         assert paths["pdfs_dir"].name == "pdfs"
         assert paths["images_dir"].name == "images"
 

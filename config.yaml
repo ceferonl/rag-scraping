@@ -19,7 +19,7 @@ pdf:
 output:
   # Base directories for different run types
   demo_base_dir: "output/demo"
-  main_base_dir: "output/main"
+  production_base_dir: "output/production"
 
   # Subdirectories (will be created relative to base_dir)
   pdfs_subdir: "pdfs"
@@ -29,7 +29,7 @@ output:
   timestamp_format: "%Y%m%d_%H%M%S"
 
   # Default run type
-  default_run_type: "demo"  # "demo" or "main"
+  default_run_type: "production"  # "demo" or "production"
 
 rag:
   min_chunk_size: 50

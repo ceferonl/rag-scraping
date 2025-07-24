@@ -267,12 +267,12 @@ def create_pdf_chunks(
 def clean_text_for_rag(text: str) -> str:
     if not text:
         return ""
-    text = text.replace('"', '"').replace('"', '"')
-    text = text.replace(''', "'").replace(''', "'")
+    text = text.replace('"', '')
+    text = text.replace("'", '')
     text = text.replace('\\', '/')
     text = text.replace('\t', ' ')
-    text = text.replace('\\"', '"')
-    text = text.replace("\\'", "'")
+    text = text.replace('\\"', '')
+    text = text.replace("\\'", '')
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = text.replace('\n', ' ')
     text = re.sub(r' +', ' ', text)
