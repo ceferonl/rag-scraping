@@ -14,7 +14,7 @@ from datetime import datetime
 
 from .config import load_config_with_paths
 from .scraping import scrape_main_page, scrape_item_details
-from .pdf_processing import process_pdfs_from_items
+from .pdf_processing import process_pdfs_from_items, process_all_pdfs
 from .rag_chunking import create_rag_chunks
 from .models import MainPageItem, KnowledgeBaseItem
 
@@ -146,8 +146,9 @@ def process_pdfs_from_file(
         )
         detailed_items.append(item)
 
-    # Process PDFs
-    return process_pdfs_from_items(detailed_items, config)
+    # Process PDFs with all intermediate outputs
+    raw, cleaned, rag_ready = process_all_pdfs(detailed_items, config)
+    return rag_ready
 
 
 async def run_full_pipeline(

@@ -57,7 +57,7 @@ Examples:
     )
     parser.add_argument(
         '--run-type',
-        choices=['demo', 'main'],
+        choices=['main', 'demo'],
         help='Run type (demo or main). Overrides config default.'
     )
 

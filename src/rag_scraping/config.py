@@ -9,6 +9,11 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env automatically
+load_dotenv()
 
 
 def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
