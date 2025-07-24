@@ -10,6 +10,9 @@ dependencies = [
     "ipykernel",
     "unstructured[pdf]>=0.18.5",
     "pyyaml>=6.0.2",
+    "azure-core",
+    "azure-search-documents",
+    "python-dotenv",
 ]
 
 [build-system]
