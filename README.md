@@ -137,3 +137,10 @@ ruff check .
 ## Contributing
 
 [Add contribution guidelines here]
+
+## TODOs for Azure Compatibility
+
+- [ ] **Date fields:** All date fields must be ISO8601 with timezone (e.g. `2023-07-17T00:00:00Z`). Fix at data creation, not just before upload.
+- [ ] **Document IDs:** All IDs/keys for Azure must only contain `[a-zA-Z0-9_\-=]`. Normalize IDs at creation (remove/replace forbidden chars, normalize unicode, e.g. é→e).
+- [ ] **Enforce in code:** Consider enforcing these constraints in your data models/classes, not just in upload scripts, to prevent future bugs.
+- [ ] **See also:** Check `scripts/vector_db/upload_to_azure.py` for upload logic and extra validation steps.

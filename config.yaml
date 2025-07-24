@@ -43,3 +43,8 @@ rag:
 logging:
   level: "INFO"
   format: "[%(asctime)s] %(levelname)s %(name)s: %(message)s"
+
+vector_db:
+  provider: "azure"
+  endpoint: "https://vindbaarheid-vp.search.windows.net"
+  index_name: "kennisbank-index"
