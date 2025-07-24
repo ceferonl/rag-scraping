@@ -14,7 +14,7 @@ from datetime import datetime
 
 from .config import load_config_with_paths
 from .scraping import scrape_main_page, scrape_item_details
-from .pdf_processing import process_pdfs_from_items, process_all_pdfs
+from .pdf_processing import process_all_pdfs
 from .rag_chunking import create_rag_chunks
 from .models import MainPageItem, KnowledgeBaseItem
 
@@ -183,7 +183,7 @@ async def run_full_pipeline(
     pdf_chunks = []
     if include_pdfs:
         logger.info("Processing PDFs...")
-        pdf_chunks = process_pdfs_from_items(detailed_items, config)
+        _, _, pdf_chunks = process_all_pdfs(detailed_items, config)
 
     # Step 4: Combine all chunks
     all_chunks = page_chunks + pdf_chunks

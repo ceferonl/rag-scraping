@@ -29,100 +29,37 @@ from .utils import clean_text_for_rag, format_date, create_chunk_id
 logger = logging.getLogger(__name__)
 
 
-def process_pdfs_from_items(
-    items: List[KnowledgeBaseItem],
-    config: Dict[str, Any]
-) -> List[Dict[str, Any]]:
-    """
-    Process PDFs from knowledge base items and create RAG chunks.
-
-    Args:
-        items: List of knowledge base items
-        config: Configuration dictionary
-
-    Returns:
-        List of PDF RAG chunks
-    """
-    logger.info(f"Processing PDFs from {len(items)} items...")
-
+def process_all_pdfs(items, config):
     output_paths = config['output_paths']
     timestamp = config['timestamp']
-
-    all_pdf_chunks = []
-    processed_pdfs = []
-
-    for i, item in enumerate(items, 1):
-        logger.info(f"Processing PDFs for item {i}/{len(items)}: {item.title}")
-
-        for j, pdf_url in enumerate(item.pdfs, 1):
+    raw_items = []
+    cleaned_items = []
+    rag_ready_items = []
+    for item in items:
+        for pdf_url in item.pdfs:
             if not pdf_url:
                 continue
-
-            logger.info(f"  Processing PDF {j}/{len(item.pdfs)}: {os.path.basename(pdf_url)}")
-
-            try:
-                pdf_chunks = process_single_pdf(
-                    pdf_url, item, output_paths, config
-                )
-
-                if pdf_chunks:
-                    all_pdf_chunks.extend(pdf_chunks)
-                    processed_pdfs.append({
-                        'url': pdf_url,
-                        'title': item.title,
-                        'chunks': len(pdf_chunks)
-                    })
-                    logger.info(f"    ✓ Created {len(pdf_chunks)} chunks")
-                else:
-                    logger.warning(f"    ✗ No chunks created")
-
-            except Exception as e:
-                logger.error(f"    ✗ Error processing PDF: {e}")
+            pdf_filepath = download_pdf(pdf_url, output_paths['pdfs_dir'], config)
+            if not pdf_filepath:
                 continue
-
-    # Save PDF chunks
-    pdf_chunks_file = output_paths['base_dir'] / f"pdf_items_rag_ready_{timestamp}.json"
-    with open(pdf_chunks_file, 'w', encoding='utf-8') as f:
-        json.dump(all_pdf_chunks, f, indent=2, ensure_ascii=False)
-
-    logger.info(f"PDF processing complete! Created {len(all_pdf_chunks)} chunks from {len(processed_pdfs)} PDFs")
-    logger.info(f"PDF chunks saved to: {pdf_chunks_file}")
-
-    return all_pdf_chunks
-
-
-def process_single_pdf(
-    pdf_url: str,
-    item: KnowledgeBaseItem,
-    output_paths: Dict[str, Path],
-    config: Dict[str, Any]
-) -> List[Dict[str, Any]]:
-    """
-    Process a single PDF and create RAG chunks.
-
-    Args:
-        pdf_url: URL of the PDF
-        item: Knowledge base item
-        output_paths: Output path configuration
-        config: Configuration dictionary
-
-    Returns:
-        List of PDF RAG chunks
-    """
-    # Download PDF
-    pdf_filepath = download_pdf(pdf_url, output_paths['pdfs_dir'], config)
-    if not pdf_filepath:
-        return []
-
-    # Extract content
-    raw_content = extract_pdf_content(pdf_filepath, output_paths['images_dir'])
-    if not raw_content:
-        return []
-
-    # Create RAG chunks
-    chunks = create_pdf_chunks(item, pdf_url, raw_content, config)
-
-    return chunks
+            raw_content = extract_pdf_content_with_images(pdf_filepath, output_paths['images_dir'])
+            if not raw_content:
+                continue
+            raw_item = create_raw_pdf_item(item, pdf_url, raw_content)
+            raw_items.append(raw_item)
+            cleaned_item = create_cleaned_pdf_item(item, pdf_url, raw_content)
+            cleaned_items.append(cleaned_item)
+            rag_chunks = create_pdf_chunks(item, pdf_url, raw_content, config)
+            rag_ready_items.extend(rag_chunks)
+    # Save outputs
+    base_dir = output_paths['base_dir']
+    with open(base_dir / f"pdf_items_raw_{timestamp}.json", 'w', encoding='utf-8') as f:
+        json.dump(raw_items, f, indent=2, ensure_ascii=False)
+    with open(base_dir / f"pdf_items_cleaned_{timestamp}.json", 'w', encoding='utf-8') as f:
+        json.dump(cleaned_items, f, indent=2, ensure_ascii=False)
+    with open(base_dir / f"pdf_items_rag_ready_{timestamp}.json", 'w', encoding='utf-8') as f:
+        json.dump(rag_ready_items, f, indent=2, ensure_ascii=False)
+    return raw_items, cleaned_items, rag_ready_items
 
 
 def download_pdf(
@@ -341,39 +278,6 @@ def clean_text_for_rag(text: str) -> str:
     text = re.sub(r' +', ' ', text)
     text = text.strip()
     return text
-
-
-def process_all_pdfs(items, config):
-    output_paths = config['output_paths']
-    timestamp = config['timestamp']
-    raw_items = []
-    cleaned_items = []
-    rag_ready_items = []
-    for item in items:
-        for pdf_url in item.pdfs:
-            if not pdf_url:
-                continue
-            pdf_filepath = download_pdf(pdf_url, output_paths['pdfs_dir'], config)
-            if not pdf_filepath:
-                continue
-            raw_content = extract_pdf_content_with_images(pdf_filepath, output_paths['images_dir'])
-            if not raw_content:
-                continue
-            raw_item = create_raw_pdf_item(item, pdf_url, raw_content)
-            raw_items.append(raw_item)
-            cleaned_item = create_cleaned_pdf_item(item, pdf_url, raw_content)
-            cleaned_items.append(cleaned_item)
-            rag_chunks = create_pdf_chunks(item, pdf_url, raw_content, config)
-            rag_ready_items.extend(rag_chunks)
-    # Save outputs
-    base_dir = output_paths['base_dir']
-    with open(base_dir / f"pdf_items_raw_{timestamp}.json", 'w', encoding='utf-8') as f:
-        json.dump(raw_items, f, indent=2, ensure_ascii=False)
-    with open(base_dir / f"pdf_items_cleaned_{timestamp}.json", 'w', encoding='utf-8') as f:
-        json.dump(cleaned_items, f, indent=2, ensure_ascii=False)
-    with open(base_dir / f"pdf_items_rag_ready_{timestamp}.json", 'w', encoding='utf-8') as f:
-        json.dump(rag_ready_items, f, indent=2, ensure_ascii=False)
-    return raw_items, cleaned_items, rag_ready_items
 
 
 def extract_pdf_content_with_images(pdf_filepath: str, images_dir: Path) -> Optional[Dict[str, Any]]:
