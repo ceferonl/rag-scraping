@@ -46,5 +46,10 @@ logging:
 
 vector_db:
   provider: "azure"
-  endpoint: "https://vindbaarheid-vp.search.windows.net"
-  index_name: "kennisbank-index"
+  index_name: "vindbaarheid-versnellingsplan"
+
+embeddings:
+  provider: "azure_openai"  # or "openai" for regular OpenAI
+  model: "text-embedding-3-small"
+  dimensions: 1536
+  api_version: "2024-08-01-preview"

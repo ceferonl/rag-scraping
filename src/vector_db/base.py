@@ -17,23 +17,9 @@ class BaseVectorDB(ABC):
         "pdfs",
         "videos",
         "pictures",
-        "image_urls",
         "image_paths",
-        "images",
         "chunk_number",
-        "content_length",
-        "main_content",
-        "url",
-        "item_type",
-        "other_files",
-        "elements",
-        "extracted_text",
-        "page_texts",
-        "source_item_url",
-        "total_elements",
-        "total_images",
-        "total_pages",
-        "extraction_metadata"
+        "content_length"
     ]
 
     def __init__(self, endpoint: Optional[str] = None, index_name: Optional[str] = None, api_key: Optional[str] = None):

@@ -5,6 +5,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 import re
 import unicodedata
+from openai import OpenAI
+from openai import AzureOpenAI
 
 # Load environment variables from .env
 load_dotenv()
@@ -59,11 +61,37 @@ def check_ids(docs):
             bad += 1
     print(f"Checked {len(docs)} IDs, found {bad} with forbidden characters.")
 
+def to_azure_doc(d, embed_fn, config):
+    return {
+        **d,
+        "contentVector": embed_fn(d.get("content", "") or "", config)
+    }
+
+def embed_text(text: str, config: dict) -> list[float]:
+    """Generate embeddings using Azure OpenAI"""
+    AZURE_OPENAI_ENDPOINT = os.environ["AZURE_OPENAI_ENDPOINT"]
+    AZURE_OPENAI_API_KEY = os.environ["AZURE_OPENAI_API_KEY"]
+
+    # Get model and API version from config
+    embeddings_cfg = config.get('embeddings', {})
+    AZURE_OPENAI_API_VERSION = embeddings_cfg.get('api_version', '2024-08-01-preview')
+    EMBED_MODEL = embeddings_cfg.get('model', 'text-embedding-3-small')
+
+    client = AzureOpenAI(
+        api_key=AZURE_OPENAI_API_KEY,
+        api_version=AZURE_OPENAI_API_VERSION,
+        azure_endpoint=AZURE_OPENAI_ENDPOINT,
+    )
+
+    text = (text or "")
+    response = client.embeddings.create(model=EMBED_MODEL, input=text)
+    return response.data[0].embedding
+
 def main():
     # Config
     config = load_config(str(Path(__file__).resolve().parent.parent.parent / 'config.yaml'))
     vector_db_cfg = config.get('vector_db', {})
-    endpoint = vector_db_cfg.get('endpoint')
+    endpoint = os.environ.get('AZURE_SEARCH_ENDPOINT')
     index_name = vector_db_cfg.get('index_name')
     api_key = os.environ.get('AZURE_SEARCH_API_KEY')
     if not (endpoint and index_name and api_key):
@@ -98,6 +126,11 @@ def main():
     print(f"Creating index '{index_name}' on Azure...")
     db.create_index()
     print("Index ready.")
+
+    # Embed documents
+    print(f"Embedding {len(docs)} documents...")
+    docs = [to_azure_doc(d, embed_text, config) for d in docs]
+    print("Embedding complete.")
 
     # Upload documents in batches
     print(f"Uploading {len(docs)} documents in batches...")
