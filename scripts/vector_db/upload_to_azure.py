@@ -73,9 +73,9 @@ def embed_text(text: str, config: dict) -> list[float]:
     AZURE_OPENAI_API_KEY = os.environ["AZURE_OPENAI_API_KEY"]
 
     # Get model and API version from config
-    embeddings_cfg = config.get('embeddings', {})
-    AZURE_OPENAI_API_VERSION = embeddings_cfg.get('api_version', '2024-08-01-preview')
-    EMBED_MODEL = embeddings_cfg.get('model', 'text-embedding-3-small')
+    embeddings_config = config.get('embeddings', {})
+    AZURE_OPENAI_API_VERSION = embeddings_config.get('api_version', '2024-08-01-preview')
+    EMBED_MODEL = embeddings_config.get('model', 'text-embedding-3-small')
 
     client = AzureOpenAI(
         api_key=AZURE_OPENAI_API_KEY,

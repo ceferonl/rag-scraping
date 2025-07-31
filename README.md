@@ -140,7 +140,10 @@ ruff check .
 
 ## TODOs for Azure Compatibility
 
+- [ ] **Missing data**. Currently there are 14 messages: "The server encountered an internal error or misconfiguration and was unable to complete your request. Please contact the server administrator at root@localhost to inform them of the time this error occurred, and the actions you performed just before this error. More information about this error may be available in the server error log". This should be fixed, and a log should be saved. In addition, the scraping should be more robust, in order to get this information (since the site is avaialble in general).
 - [ ] **Date fields:** All date fields must be ISO8601 with timezone (e.g. `2023-07-17T00:00:00Z`). Fix at data creation, not just before upload.
 - [ ] **Document IDs:** All IDs/keys for Azure must only contain `[a-zA-Z0-9_\-=]`. Normalize IDs at creation (remove/replace forbidden chars, normalize unicode, e.g. é→e).
 - [ ] **Enforce in code:** Consider enforcing these constraints in your data models/classes, not just in upload scripts, to prevent future bugs.
-- [ ] **See also:** Check `scripts/vector_db/upload_to_azure.py` for upload logic and extra validation steps.
+- [ ] **Remove classes** Considering remove classes from azure.py and base.py in favor of a strictly functional approach.
+- [ ] **See also:** Check `scripts/vector_db/upload_to_azure.py` for upload logic and extra validation steps. Should this be integrated in src/vector_db
+- [ ] **Check scripts** Currently scripts has many scripts, can some be removed
