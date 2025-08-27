@@ -53,7 +53,7 @@ logging:
 
 vector_db:
   provider: "azure"
-  index_name: "vindbaarheid-versnellingsplan"
+  index_name: "versnellingsplan-kennisbank"
 
 embeddings:
   provider: "azure_openai"  # or "openai" for regular OpenAI
