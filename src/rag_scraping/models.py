@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import List, Optional, Any
 from pydantic import BaseModel, field_validator, model_validator
+from .utils import format_date
 
 
 @dataclass
@@ -43,7 +44,7 @@ class KnowledgeBaseItem:
         """Convert the item to a dictionary for JSON serialization."""
         data = asdict(self)
         if self.date:
-            data['date'] = self.date.isoformat()
+            data['date'] = format_date(self.date)
         # Remove associated_files from output since it's split into specific categories
         data.pop('associated_files', None)
         return data
