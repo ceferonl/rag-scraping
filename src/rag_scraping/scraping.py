@@ -127,12 +127,39 @@ async def scrape_main_page(config: Dict[str, Any]) -> List[MainPageItem]:
     return items
 
 
+def is_valid_content(content: str) -> bool:
+    """
+    Check if scraped content is valid (not a server error or empty).
+
+    Args:
+        content: The scraped content to validate
+
+    Returns:
+        True if content is valid, False if it indicates an error
+    """
+    if not content or len(content.strip()) < 50:
+        return False
+
+    # Check for server error indicators
+    error_indicators = [
+        "server encountered an internal error",
+        "misconfiguration and was unable to complete",
+        "contact the server administrator",
+        "error occurred",
+        "500 internal server error",
+        "503 service unavailable"
+    ]
+
+    content_lower = content.lower()
+    return not any(indicator in content_lower for indicator in error_indicators)
+
+
 async def scrape_item_details(
     main_item: MainPageItem,
     config: Dict[str, Any]
 ) -> KnowledgeBaseItem:
     """
-    Scrape detailed information for a single item.
+    Scrape detailed information for a single item with content-level retry.
 
     Args:
         main_item: Main page item to get details for
@@ -143,57 +170,76 @@ async def scrape_item_details(
     """
     logger.info(f"Scraping details for: {main_item.title}")
 
-    result = await scrape_with_retry(main_item.url, config)
-    if not result or not result.success:
-        logger.error(f"Failed to fetch details for {main_item.title}")
-        return KnowledgeBaseItem(
-            title=main_item.title,
-            url=main_item.url,
-            item_type=main_item.item_type
-        )
+    max_retries = config['scraping']['max_retries']
+    retry_delays = config['scraping']['retry_delays']
 
-    soup = BeautifulSoup(result.html, 'html.parser')
+    for attempt in range(max_retries + 1):
+        try:
+            # Attempt to scrape
+            result = await scrape_with_retry(main_item.url, config)
+            if not result or not result.success:
+                logger.warning(f"HTTP request failed for {main_item.title} (attempt {attempt + 1})")
+                raise Exception("HTTP request failed")
 
-    # Create knowledge base item
-    item = KnowledgeBaseItem(
+            soup = BeautifulSoup(result.html, 'html.parser')
+
+            # Extract main content first to validate
+            main_content = extract_main_content(soup, config)
+
+            # Validate content quality
+            if not is_valid_content(main_content):
+                logger.warning(f"Invalid content detected for {main_item.title} (attempt {attempt + 1})")
+                raise Exception("Invalid or error content detected")
+
+            # Content is valid - create the full item
+            item = KnowledgeBaseItem(
+                title=main_item.title,
+                url=main_item.url,
+                item_type=main_item.item_type,
+                main_content=main_content
+            )
+
+            # Extract additional details
+            date_elem = soup.select_one('time.elementor-post-date')
+            if date_elem:
+                date_text = date_elem.get_text(strip=True)
+                try:
+                    item.date = datetime.strptime(date_text, "%d %B %Y")
+                except ValueError:
+                    logger.warning(f"Could not parse date: {date_text}")
+
+            zones_elem = soup.select_one('div.elementor-post__terms')
+            if zones_elem:
+                zones_links = zones_elem.select('a')
+                item.zones = [link.get_text(strip=True) for link in zones_links]
+
+            type_elem = soup.select_one('div.elementor-post__badge')
+            if type_elem:
+                item.type_innovatie = [type_elem.get_text(strip=True)]
+
+            files = extract_associated_files(soup)
+            item.pdfs = files.get('pdfs', [])
+            item.videos = files.get('videos', [])
+            item.pictures = files.get('pictures', [])
+
+            logger.info(f"Successfully scraped details for {item.title}")
+            return item
+
+        except Exception as e:
+            if attempt < max_retries:
+                delay = retry_delays[min(attempt, len(retry_delays) - 1)]
+                logger.info(f"Retrying {main_item.title} in {delay} seconds (attempt {attempt + 2}/{max_retries + 1})")
+                await asyncio.sleep(delay)
+            else:
+                logger.error(f"Failed to scrape {main_item.title} after {max_retries + 1} attempts: {e}")
+
+    # Return failed item after all retries exhausted
+    return KnowledgeBaseItem(
         title=main_item.title,
         url=main_item.url,
-        item_type=main_item.item_type
+        item_type=main_item.item_type,
+        main_content=f"Failed to scrape after {max_retries + 1} attempts"
     )
-
-    # Extract date
-    date_elem = soup.select_one('time.elementor-post-date')
-    if date_elem:
-        date_text = date_elem.get_text(strip=True)
-        try:
-            # Try to parse the date (you might need to adjust the format)
-            item.date = datetime.strptime(date_text, "%d %B %Y")
-        except ValueError:
-            logger.warning(f"Could not parse date: {date_text}")
-
-    # Extract zones
-    zones_elem = soup.select_one('div.elementor-post__terms')
-    if zones_elem:
-        zones_links = zones_elem.select('a')
-        item.zones = [link.get_text(strip=True) for link in zones_links]
-
-    # Extract type innovatie
-    type_elem = soup.select_one('div.elementor-post__badge')
-    if type_elem:
-        item.type_innovatie = [type_elem.get_text(strip=True)]
-
-    # Extract main content
-    main_content = extract_main_content(soup, config)
-    item.main_content = main_content
-
-    # Extract associated files
-    files = extract_associated_files(soup)
-    item.pdfs = files.get('pdfs', [])
-    item.videos = files.get('videos', [])
-    item.pictures = files.get('pictures', [])
-
-    logger.info(f"Successfully scraped details for {item.title}")
-    return item
 
 
 def extract_main_content(soup: BeautifulSoup, config: Dict[str, Any]) -> str:

@@ -307,11 +307,13 @@ async def scrape_detailed_items(
             try:
                 detailed_item = await scrape_item_details(main_item, config)
 
-                # Check for server errors in the content
-                if "server encountered an internal error" in detailed_item.main_content.lower():
-                    stats['server_errors'] += 1
+                # Check if scraping actually failed (content indicates failure)
+                if detailed_item.main_content.startswith("Failed to scrape after"):
                     stats['failed_scrapes'] += 1
-                    logger.error(f"Server error detected for item: {main_item.title}")
+                    # Check if it was server errors specifically
+                    if "server encountered an internal error" in detailed_item.main_content.lower():
+                        stats['server_errors'] += 1
+                    logger.error(f"✗ Failed to scrape: {main_item.title}")
                 else:
                     stats['successful_scrapes'] += 1
                     logger.info(f"✓ Successfully scraped: {main_item.title}")

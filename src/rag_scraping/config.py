@@ -19,19 +19,19 @@ load_dotenv()
 def _get_project_root() -> Path:
     """
     Find the project root directory by looking for config.yaml.
-    
+
     Returns:
         Path to project root directory
     """
     # Start from current file's directory and work up
     current_path = Path(__file__).resolve()
-    
+
     # Look for config.yaml in parent directories
     for parent in [current_path] + list(current_path.parents):
         config_file = parent / "config.yaml"
         if config_file.exists():
             return parent
-    
+
     # If config.yaml not found, assume current working directory is project root
     return Path.cwd()
 
@@ -75,7 +75,7 @@ def get_output_paths(config: Dict[str, Any], run_type: str = None) -> Dict[str, 
 
     # Get project root directory (where config.yaml is located)
     project_root = _get_project_root()
-    
+
     # Get base directory for this run type (always relative to project root)
     base_dir_key = f"{run_type}_base_dir"
     base_dir = project_root / config['output'][base_dir_key]
