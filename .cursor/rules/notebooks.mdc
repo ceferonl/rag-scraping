@@ -1,0 +1,82 @@
+---
+description: Guidelines for using the notebooks folder for temporary and test scripts
+globs: notebooks/*.py, notebooks/*.ipynb, notebooks/*.md
+alwaysApply: true
+---
+
+# Notebooks Folder Usage
+
+**The `notebooks/` folder is designated for temporary, experimental, and test scripts.**
+
+## **What Goes in Notebooks Folder**
+
+- **Temporary test scripts** for debugging and development
+- **Experimental code** not ready for production
+- **One-off analysis scripts** for data exploration
+- **Development notebooks** (`.ipynb` files)
+- **Quick prototypes** and proof-of-concept code
+- **Testing utilities** like `test_detailed_scraping.py`
+
+## **File Naming Conventions**
+
+- Use descriptive names with clear purpose:
+  ```
+  test_detailed_scraping.py
+  debug_pdf_processing.py
+  experiment_new_chunking.py
+  prototype_vector_search.ipynb
+  analyze_scraping_results.py
+  ```
+
+## **Path References**
+
+- **Scripts in notebooks must use proper path references:**
+  ```python
+  # ✅ DO: Correct path for notebooks folder
+  sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+  # ❌ DON'T: Wrong path that assumes root directory
+  sys.path.insert(0, str(Path(__file__).parent / "src"))
+  ```
+
+## **Temporary Nature**
+
+- **Files in notebooks/ are considered temporary**
+- **Delete or archive** scripts when no longer needed
+- **Don't commit large data files** or outputs to notebooks/
+- **Document purpose** at top of each script
+
+## **What Stays Out**
+
+- **Production code** belongs in `src/`
+- **Configuration files** belong in root
+- **Documentation** belongs in root or docs/
+- **Tests for CI/CD** belong in `tests/`
+
+## **Examples**
+
+```python
+#!/usr/bin/env python3
+"""
+TEMPORARY: Test script for debugging detailed scraping.
+Purpose: Verify improved delays reduce server errors.
+Created: 2025-08-27
+TODO: Delete after production validation
+"""
+
+import sys
+from pathlib import Path
+
+# Correct path reference from notebooks/
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+```
+
+## **Cleanup Guidelines**
+
+- **Review notebooks/ monthly** for unused files
+- **Archive important experiments** to separate location
+- **Document learnings** in main codebase before deletion
+- **Keep notebooks/ lean** and focused on current work
+
+---
+*Keep the notebooks folder clean and purposeful. It's a workspace, not a permanent home.*
