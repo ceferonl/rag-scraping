@@ -3,9 +3,10 @@
 
 scraping:
   base_url: "https://www.versnellingsplan.nl/Kennisbank/"
-  request_delay: 1.0
-  min_delay: 0.5
-  max_delay: 2.0
+  request_delay: 4.0
+  main_page_to_details_delay: 5.0
+  min_delay: 2.0
+  max_delay: 6.0
   max_retries: 3
   timeout: 30
   user_agent: "RAG-Scraper/1.0"
@@ -43,6 +44,12 @@ rag:
 logging:
   level: "INFO"
   format: "[%(asctime)s] %(levelname)s %(name)s: %(message)s"
+  # File logging settings - logs will be subfolder of output
+  log_to_file: true
+  log_subdir: "logs"  # Subfolder under output base_dir
+  detailed_log_file: "detailed_log_{timestamp}.log"
+  summary_log_file: "log_summary_{timestamp}.md"
+  max_log_files: 10
 
 vector_db:
   provider: "azure"
