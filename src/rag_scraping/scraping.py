@@ -97,8 +97,30 @@ async def scrape_main_page(config: Dict[str, Any]) -> List[MainPageItem]:
         return []
 
     soup = BeautifulSoup(result.html, 'html.parser')
+    
+    # Debug: Check HTML content
+    logger.info(f"HTML length: {len(result.html) if result.html else 0} characters")
+    
     item_divs = soup.find_all('div', class_='elementor-post__card')
     logger.info(f"Found {len(item_divs)} items on main page")
+    
+    # Debug: If no items found, check for other indicators
+    if len(item_divs) == 0:
+        all_divs = soup.find_all('div')
+        elementor_divs = [div for div in all_divs if div.get('class') and any('elementor' in cls for cls in div.get('class', []))]
+        logger.warning(f"No items found! Total divs: {len(all_divs)}, Elementor divs: {len(elementor_divs)}")
+        
+        # Check page title
+        title = soup.find('title')
+        if title:
+            logger.warning(f"Page title: {title.get_text()}")
+        
+        # Check for error content
+        body_text = soup.get_text()[:200] if soup else ""
+        if any(error in body_text.lower() for error in ['error', 'not found', 'maintenance']):
+            logger.error(f"Error content detected: {body_text}")
+        else:
+            logger.warning(f"Page content preview: {body_text[:100]}")
 
     items = []
     for item_div in item_divs:
