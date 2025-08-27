@@ -180,6 +180,10 @@ def create_log_summary(
         if len(errors) > scraping_stats.get('total_items', 1) * 0.1:
             summary_content += "- High error rate detected, review error patterns\n"
 
+        if scraping_stats.get('failed_scrapes', 0) > 0:
+            summary_content += f"- For remaining {scraping_stats.get('failed_scrapes', 0)} failed items, try: `cd notebooks && uv run python fix_stubborn_pages.py`\n"
+            summary_content += "- The stubborn pages script uses extended retry logic (10 attempts, exponential backoff)\n"
+
         summary_content += "\n---\n*Generated automatically by RAG Scraping Pipeline*\n"
 
         # Write summary file
