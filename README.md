@@ -1,4 +1,4 @@
-# RAG Scraping
+# Versnellingslan Vectorization
 
 A Python-based web scraping tool designed to extract and process content from the Versnellingsplan knowledge base. This tool is part of a larger RAG (Retrieval-Augmented Generation) system, specifically handling the data collection and preprocessing phase.
 
@@ -83,7 +83,9 @@ scraper.save_results("output.json")
 
 ## Testing
 
-The project includes a comprehensive test suite. Run tests using pytest:
+The project includes a limited test suite for the scraping (including pdf extraction and chunking) part.
+
+Run tests using pytest:
 
 ```bash
 # Run all tests
@@ -93,6 +95,9 @@ python -m pytest
 python -m pytest tests/test_scraper.py
 python -m pytest tests/test_integration_main_page.py
 ```
+
+There are no tests for the vectorization and uploading yet.
+
 
 ## Project Structure
 
@@ -138,12 +143,10 @@ ruff check .
 
 [Add contribution guidelines here]
 
-## TODOs for Azure Compatibility
+## Potential TODO's
+- [ ] Add evaluation module
+- [ ] Split rag_scraping into scrapin and transformation (embedding could be part of transforamtion instead of vector_db)
+- [ ] Rename vector_db to publishing
+- [ ] Enable different vector db publishers next to Azure AI Search
 
-- [ ] **Missing data**. Currently there are 14 messages: "The server encountered an internal error or misconfiguration and was unable to complete your request. Please contact the server administrator at root@localhost to inform them of the time this error occurred, and the actions you performed just before this error. More information about this error may be available in the server error log". This should be fixed, and a log should be saved. In addition, the scraping should be more robust, in order to get this information (since the site is avaialble in general).
-- [ ] **Date fields:** All date fields must be ISO8601 with timezone (e.g. `2023-07-17T00:00:00Z`). Fix at data creation, not just before upload.
-- [ ] **Document IDs:** All IDs/keys for Azure must only contain `[a-zA-Z0-9_\-=]`. Normalize IDs at creation (remove/replace forbidden chars, normalize unicode, e.g. é→e).
-- [ ] **Enforce in code:** Consider enforcing these constraints in your data models/classes, not just in upload scripts, to prevent future bugs.
-- [ ] **Remove classes** Considering remove classes from azure.py and base.py in favor of a strictly functional approach.
-- [ ] **See also:** Check `scripts/vector_db/upload_to_azure.py` for upload logic and extra validation steps. Should this be integrated in src/vector_db
-- [ ] **Check scripts** Currently scripts has many scripts, can some be removed
+
