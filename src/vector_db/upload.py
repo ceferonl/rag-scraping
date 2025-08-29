@@ -1,90 +1,20 @@
 """
 Upload functionality for vector databases.
 
-This module provides functionality to upload RAG documents to vector databases
-with embedding generation. Use validation.py for document validation.
+This module provides functionality to upload RAG documents to vector databases.
+Use validation.py for document validation and embeddings.py for embedding generation.
 """
 
-import os
 import json
 import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from dotenv import load_dotenv
-from openai import AzureOpenAI
 
-from ..rag_scraping.config import load_config
+from rag_scraping.config import load_config
 from .azure import AzureVectorDB
+from .embeddings import add_embeddings_to_documents
 
 logger = logging.getLogger(__name__)
-
-# Load environment variables
-load_dotenv()
-
-
-def embed_text(text: str, config: Dict[str, Any]) -> List[float]:
-    """
-    Generate embeddings using Azure OpenAI.
-
-    Args:
-        text: Text to embed
-        config: Configuration dictionary
-
-    Returns:
-        Embedding vector
-    """
-    # Get environment variables
-    endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
-    api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-
-    if not endpoint or not api_key:
-        raise ValueError("Missing Azure OpenAI environment variables: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY")
-
-    # Get model and API version from config
-    embeddings_config = config.get('embeddings', {})
-    api_version = embeddings_config.get('api_version', '2024-08-01-preview')
-    model = embeddings_config.get('model', 'text-embedding-3-small')
-
-    client = AzureOpenAI(
-        api_key=api_key,
-        api_version=api_version,
-        azure_endpoint=endpoint,
-    )
-
-    text = text or ""
-    response = client.embeddings.create(model=model, input=text)
-    return response.data[0].embedding
-
-
-def add_embeddings(docs: List[Dict[str, Any]], config: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Add embeddings to documents.
-
-    Args:
-        docs: Documents to add embeddings to
-        config: Configuration dictionary
-
-    Returns:
-        Documents with embeddings added
-    """
-    logger.info(f"Adding embeddings to {len(docs)} documents...")
-
-    docs_with_embeddings = []
-    for i, doc in enumerate(docs):
-        content = doc.get('content', '') or doc.get('title', '')
-        embedding = embed_text(content, config)
-
-        doc_with_embedding = {
-            **doc,
-            "contentVector": embedding
-        }
-        docs_with_embeddings.append(doc_with_embedding)
-
-        if (i + 1) % 100 == 0:
-            logger.info(f"Generated embeddings for {i + 1}/{len(docs)} documents")
-
-    logger.info("Embedding generation complete.")
-    return docs_with_embeddings
 
 
 def upload_documents_to_azure(
@@ -93,7 +23,9 @@ def upload_documents_to_azure(
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
     index_name: Optional[str] = None,
-    create_index: bool = True
+    create_index: bool = True,
+    add_embeddings: bool = True,
+    save_embeddings: bool = True
 ) -> None:
     """
     Upload documents to Azure Cognitive Search.
@@ -107,7 +39,11 @@ def upload_documents_to_azure(
         api_key: Azure Search API key (if not provided, reads from env)
         index_name: Index name (if not provided, reads from config)
         create_index: Whether to create/recreate the index
+        add_embeddings: Whether to add embeddings to documents
+        save_embeddings: Whether to save embeddings to file
     """
+    import os
+
     # Get Azure configuration
     endpoint = endpoint or os.environ.get('AZURE_SEARCH_ENDPOINT')
     api_key = api_key or os.environ.get('AZURE_SEARCH_API_KEY')
@@ -120,8 +56,11 @@ def upload_documents_to_azure(
 
     logger.info(f"Uploading {len(docs)} documents to Azure Search: {index_name}")
 
-    # Add embeddings
-    docs_with_embeddings = add_embeddings(docs, config)
+    # Add embeddings if requested
+    if add_embeddings:
+        docs_with_embeddings = add_embeddings_to_documents(docs, config, save_embeddings)
+    else:
+        docs_with_embeddings = docs
 
     # Initialize Azure Vector DB
     db = AzureVectorDB(endpoint=endpoint, api_key=api_key, index_name=index_name)
@@ -187,6 +126,12 @@ def upload_from_file(
     upload_documents_to_azure(docs, config, **kwargs)
 
 
+# Backward compatibility function
+def add_embeddings(docs: List[Dict[str, Any]], config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Backward compatibility wrapper."""
+    return add_embeddings_to_documents(docs, config, save_embeddings=False)
+
+
 if __name__ == "__main__":
     # Simple CLI interface
     import argparse
@@ -195,6 +140,8 @@ if __name__ == "__main__":
     parser.add_argument("json_file", help="Path to JSON file containing pre-validated documents")
     parser.add_argument("--config", help="Path to config file (default: auto-detect config.yaml)")
     parser.add_argument("--no-create-index", action="store_true", help="Don't create/recreate index")
+    parser.add_argument("--no-embeddings", action="store_true", help="Don't add embeddings")
+    parser.add_argument("--no-save-embeddings", action="store_true", help="Don't save embeddings to file")
 
     args = parser.parse_args()
 
@@ -205,7 +152,9 @@ if __name__ == "__main__":
         upload_from_file(
             args.json_file,
             config_path=args.config,
-            create_index=not args.no_create_index
+            create_index=not args.no_create_index,
+            add_embeddings=not args.no_embeddings,
+            save_embeddings=not args.no_save_embeddings
         )
         print("Upload completed successfully!")
     except Exception as e:

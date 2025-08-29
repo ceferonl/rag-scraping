@@ -10,7 +10,7 @@ import logging
 import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
-from ..rag_scraping.utils import normalize_document_id, format_date
+from rag_scraping.utils import normalize_document_id, format_date
 
 logger = logging.getLogger(__name__)
 

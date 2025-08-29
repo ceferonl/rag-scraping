@@ -13,6 +13,7 @@ dependencies = [
     "azure-core",
     "azure-search-documents",
     "python-dotenv",
+    "openai>=1.0.0",
 ]
 
 [build-system]
