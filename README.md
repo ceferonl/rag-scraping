@@ -1,22 +1,32 @@
-# Versnellingslan Vectorization
+# Versnellingsplan RAG Scraping & Vectorization
 
-A Python-based web scraping tool designed to extract and process content from the Versnellingsplan knowledge base. This tool is part of a larger RAG (Retrieval-Augmented Generation) system, specifically handling the data collection and preprocessing phase.
+A comprehensive Python-based RAG (Retrieval-Augmented Generation) pipeline for the Versnellingsplan knowledge base. Features functional architecture, web scraping, PDF processing, embedding generation, and vector database integration.
 
 ## Features
 
-- Asynchronous web scraping using `crawl4ai`
-- Structured data extraction from Versnellingsplan knowledge base
-- Support for extracting:
-  - Main content
-  - Publication dates
-  - Zones
-  - Item types
-  - Associated files (PDFs, videos, pictures)
-- Command-line interface with configurable options
-- Data validation using Pydantic models
-- PDF content extraction and processing
-- Multiple export formats (JSON, CSV, Markdown)
-- Comprehensive test suite with unit and integration tests
+### Core Pipeline
+- **Functional pipeline architecture** with demo and production modes
+- **Asynchronous web scraping** using `crawl4ai` with intelligent delays
+- **PDF content extraction** with fallback processing
+- **RAG-ready chunking** with configurable size limits
+- **YAML-based configuration** with environment-specific settings
+
+### Data Extraction
+- Main content, publication dates, zones, item types
+- Associated files (PDFs, videos, pictures)
+- Content validation and retry logic
+- Comprehensive logging and error handling
+
+### Vector Database Integration
+- **Azure AI Search** integration with automatic index creation
+- **Embedding generation** (Azure OpenAI, OpenAI)
+- **Document upload** with validation and batch processing
+- **Extensible architecture** for multiple vector database providers
+
+### Quality & Testing
+- **Comprehensive test suite** (functional, architectural, data validation)
+- **Data validation** with automated reporting
+- **Production-ready** with extensive error handling
 
 ## Installation
 
@@ -31,121 +41,163 @@ cd rag-scraping
 uv sync
 ```
 
-3. Install additional dependencies for PDF processing (optional):
+3. Environment setup:
 ```bash
-uv add unstructured
+# Copy example environment file and edit with your credentials
+cp .env.example .env
+# Edit .env with your actual API keys and endpoints
 ```
 
 ## Usage
 
-### Basic Usage
+### Pipeline Modes
 
-```python
-from rag_scraping.pages import VersnellingsplanScraper
-
-# Initialize the scraper
-scraper = VersnellingsplanScraper()
-
-# Scrape the knowledge base
-items = await scraper.scrape()
-
-# Process the results
-for item in items:
-    print(f"Title: {item.title}")
-    print(f"URL: {item.url}")
-    print(f"Content: {item.main_content[:200]}...")
-```
-
-### CLI Usage
-
-The project includes a command-line interface for easy usage:
-
+**Demo Pipeline** (5 items, fast testing):
 ```bash
-# Scrape main page items only
-python -m rag_scraping.pages --output-dir output/main --max-items 10
-
-# Scrape main page + detailed items with validation
-python -m rag_scraping.pages --output-dir output/detailed --max-items 5 --max-details 3 --validate
-
-# Process PDFs from detailed items
-python -m rag_scraping.pdfs --input-file output/detailed/detailed_items.json --output-dir output/pdfs
-
-# Export to different formats
-python -m rag_scraping.pages --output-dir output --export csv,markdown
+uv run python -m rag_scraping --demo
 ```
 
-### Saving Results
+**Production Pipeline** (full scraping):
+```bash
+uv run python -m rag_scraping --production
+```
 
-```python
-# Save results to a JSON file
-scraper.save_results("output.json")
+### Individual Components
+
+**Scrape main page only**:
+```bash
+uv run python -m rag_scraping --main-page-only
+```
+
+**Scrape detailed items with limits**:
+```bash
+uv run python -m rag_scraping --detailed --max-items 10 --filter-type "Publicatie"
+```
+
+**Process PDFs from existing file**:
+```bash
+uv run python -m rag_scraping --process-pdfs detailed_items_20250827_145536.json
+```
+
+### Vector Database Operations
+
+**Upload to Azure with embeddings**:
+```bash
+uv run python -m vector_db.upload --file output/production/rag_ready_unified_20250827_154459.json --create-index
+```
+
+**Validate documents**:
+```bash
+uv run python -m vector_db.validation --file output/production/rag_ready_unified_20250827_154459.json
+```
+
+### Configuration
+
+Edit `config.yaml` for custom settings:
+```yaml
+scraping:
+  request_delay: 4.0
+  max_retries: 3
+
+output:
+  default_run_type: "production"  # or "demo"
+
+embeddings:
+  provider: "azure_openai"  # or "openai"
+  model: "text-embedding-3-small"
 ```
 
 ## Testing
 
-The project includes a limited test suite for the scraping (including pdf extraction and chunking) part.
-
-Run tests using pytest:
+Run the comprehensive test suite:
 
 ```bash
 # Run all tests
-python -m pytest
+uv run pytest
 
-# Run specific test files
-python -m pytest tests/test_scraper.py
-python -m pytest tests/test_integration_main_page.py
+# Quick smoke tests
+uv run pytest tests/test_functional_smoke.py
+
+# Architecture tests
+uv run pytest tests/test_architecture.py
+
+# Data validation tests
+uv run pytest tests/test_data_validation.py
 ```
-
-There are no tests for the vectorization and uploading yet.
-
 
 ## Project Structure
 
 ```
 rag-scraping/
 ├── src/
-│   └── rag_scraping/
-│       ├── __init__.py
-│       ├── pages.py                 # Main scraper implementation
-│       ├── pdfs.py                  # PDF processing module
-│       └── knowledge_base_item.py   # Data model for scraped items
-├── tests/
-│   ├── conftest.py                  # Shared test fixtures
-│   ├── test_scraper.py             # Unit tests for scraper
-│   ├── test_knowledge_base_item.py # Tests for data model
-│   └── test_integration_*.py       # Integration tests
-└── requirements.txt
+│   ├── rag_scraping/                # Main scraping pipeline
+│   │   ├── pipeline.py              # Functional pipeline orchestration
+│   │   ├── scraping.py              # Web scraping logic
+│   │   ├── pdf_processing.py        # PDF extraction & processing
+│   │   ├── rag_chunking.py          # RAG-ready chunk creation
+│   │   ├── models.py                # Pydantic data models
+│   │   ├── config.py                # Configuration management
+│   │   ├── utils.py                 # Shared utilities
+│   │   └── __main__.py              # CLI entry point
+│   └── vector_db/                   # Vector database integration
+│       ├── base.py                  # Abstract base classes
+│       ├── azure.py                 # Azure AI Search implementation
+│       ├── embeddings.py            # Embedding generation
+│       ├── upload.py                # Document upload logic
+│       └── validation.py            # Data validation & reporting
+├── tests/                           # Comprehensive test suite
+├── config.yaml                     # Main configuration
+├── notebooks/                      # Development & analysis scripts
+└── output/                         # Generated data & logs
+    ├── demo/                       # Demo pipeline outputs
+    └── production/                 # Production pipeline outputs
 ```
 
 ## Development
 
 ### Code Quality
-
-The project uses `ruff` for linting and code quality checks. Run the linter:
-
 ```bash
-ruff check .
+# Linting
+uv run ruff check .
+
+# Testing with coverage
+uv run pytest --cov=src
 ```
 
-### Adding New Features
+### Architecture
+- **Functional over OOP**: Pure functions, minimal classes
+- **Configuration-driven**: YAML config with environment overrides
+- **Modular design**: Independent, composable components
+- **Error resilience**: Comprehensive retry and fallback logic
 
-1. Create a new branch for your feature
-2. Add tests for new functionality
-3. Implement the feature
-4. Run tests and linting
-5. Submit a pull request
+## Environment Variables
+
+Required for full functionality (see `.env.example`):
+```bash
+# Azure OpenAI (embeddings)
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-api-key
+
+# Azure AI Search (vector database)
+AZURE_SEARCH_ENDPOINT=https://your-search.search.windows.net
+AZURE_SEARCH_KEY=your-search-key
+
+# Alternative: OpenAI (set embeddings.provider: "openai")
+OPENAI_API_KEY=your-openai-api-key
+```
 
 ## License
 
-[Add your license information here]
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
 [Add contribution guidelines here]
 
-## Potential TODO's
+## Potential TODOs
+
 - [ ] Add evaluation module
-- [ ] Split rag_scraping into scrapin and transformation (embedding could be part of transforamtion instead of vector_db)
+- [ ] Split rag_scraping into scraping and transformation (embedding could be part of transformation instead of vector_db)
 - [ ] Rename vector_db to publishing
 - [ ] Enable different vector db publishers next to Azure AI Search
 
