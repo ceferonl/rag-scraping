@@ -1,0 +1,201 @@
+---
+description: Prefer functions over classes unless classes provide clear structural benefits
+globs: src/**/*.py, tests/**/*.py, notebooks/**/*.py
+alwaysApply: true
+---
+
+# Functional Programming Over Object-Oriented Programming
+
+**Default to functions, use classes only when they provide clear structural benefits.**
+
+## **Core Principle**
+
+- **Functions are the default** - Pure input/output transformations
+- **Classes only when beneficial** - State management, complex interfaces, or clear abstraction needs
+- **Composition over inheritance** - Combine simple functions rather than building class hierarchies
+
+## **When to Use Functions**
+
+✅ **Data transformations**
+```python
+# ✅ DO: Simple data transformation
+def embed_text(text: str, config: Dict[str, Any]) -> List[float]:
+    """Generate embeddings for text."""
+    provider = config['embeddings']['provider']
+    if provider == 'azure_openai':
+        return embed_text_azure_openai(text, config)
+    elif provider == 'openai':
+        return embed_text_openai(text, config)
+
+# ❌ DON'T: Unnecessary class wrapper
+class EmbeddingGenerator:
+    def __init__(self, config):
+        self.config = config
+
+    def generate(self, text):
+        # Same logic as above...
+```
+
+✅ **Stateless operations**
+```python
+# ✅ DO: Pure functions for processing
+def validate_document(doc: Dict[str, Any]) -> bool:
+    return all(field in doc for field in REQUIRED_FIELDS)
+
+def filter_valid_documents(docs: List[Dict]) -> List[Dict]:
+    return [doc for doc in docs if validate_document(doc)]
+
+# ❌ DON'T: Class for stateless operations
+class DocumentValidator:
+    def validate(self, doc):
+        # Same logic...
+```
+
+✅ **Pipeline operations**
+```python
+# ✅ DO: Composable functions
+def scrape_pages() -> List[Dict]:
+    # Implementation
+
+def process_pdfs(items: List[Dict]) -> List[Dict]:
+    # Implementation
+
+def create_rag_chunks(items: List[Dict]) -> List[Dict]:
+    # Implementation
+
+# Pipeline composition
+def run_pipeline():
+    items = scrape_pages()
+    items = process_pdfs(items)
+    return create_rag_chunks(items)
+```
+
+## **When Classes Are Justified**
+
+✅ **Stateful interfaces with complex initialization**
+```python
+# ✅ DO: Database connections need state management
+class AzureVectorDB:
+    def __init__(self, endpoint: str, api_key: str, index_name: str):
+        self.credential = AzureKeyCredential(api_key)
+        self.index_client = SearchIndexClient(endpoint, self.credential)
+        self.search_client = SearchClient(endpoint, index_name, self.credential)
+
+    def upload_documents(self, docs: List[Dict]) -> None:
+        # Uses initialized clients
+```
+
+✅ **Protocol implementations (ABC)**
+```python
+# ✅ DO: Common interface for multiple implementations
+class BaseVectorDB(ABC):
+    @abstractmethod
+    def upload_documents(self, documents: List[Dict]) -> None:
+        pass
+
+class AzureVectorDB(BaseVectorDB):
+    # Azure-specific implementation
+
+class PineconeVectorDB(BaseVectorDB):
+    # Pinecone-specific implementation
+```
+
+✅ **Complex state machines**
+```python
+# ✅ DO: When object has complex state transitions
+class DocumentProcessor:
+    def __init__(self):
+        self.state = ProcessingState.READY
+        self.processed_count = 0
+        self.error_log = []
+
+    def process_batch(self, docs):
+        # Complex state management logic
+```
+
+## **Anti-Patterns to Avoid**
+
+❌ **Classes for simple data containers**
+```python
+# ❌ DON'T: Use dataclass or TypedDict instead
+class DocumentData:
+    def __init__(self, title: str, content: str):
+        self.title = title
+        self.content = content
+
+# ✅ DO: Use simpler alternatives
+@dataclass
+class DocumentData:
+    title: str
+    content: str
+
+# Or even better - just use Dict[str, Any] with validation functions
+```
+
+❌ **Classes as namespace containers**
+```python
+# ❌ DON'T: Class used only for grouping functions
+class MathUtils:
+    @staticmethod
+    def add(a, b):
+        return a + b
+
+    @staticmethod
+    def multiply(a, b):
+        return a * b
+
+# ✅ DO: Use module-level functions
+def add(a: float, b: float) -> float:
+    return a + b
+
+def multiply(a: float, b: float) -> float:
+    return a * b
+```
+
+❌ **Single-method classes**
+```python
+# ❌ DON'T: Class with only one method
+class ContentExtractor:
+    def extract(self, url: str) -> str:
+        # Implementation
+
+# ✅ DO: Just use a function
+def extract_content(url: str) -> str:
+    # Implementation
+```
+
+## **Decision Framework**
+
+Ask these questions:
+
+1. **Does this need persistent state?** → If no, use functions
+2. **Is this a simple input/output transformation?** → Use functions
+3. **Do I need multiple implementations of the same interface?** → Consider classes
+4. **Is the initialization complex and reused?** → Consider classes
+5. **Am I just grouping related functions?** → Use module-level functions instead
+
+## **Examples from Codebase**
+
+- **Good function usage:** [embeddings.py](mdc:src/vector_db/embeddings.py) - Pure transformation functions
+- **Good class usage:** [azure.py](mdc:src/vector_db/azure.py) - Stateful database connection
+- **Refactored from class to functions:** Vector DB embeddings functionality
+
+## **Testing Benefits**
+
+Functions are easier to test:
+```python
+# ✅ Easy to test - no setup needed
+def test_embed_text():
+    result = embed_text("test", mock_config)
+    assert len(result) == 1536
+
+# ❌ Harder to test - needs object setup
+def test_embedding_generator():
+    generator = EmbeddingGenerator(mock_config)
+    result = generator.generate("test")
+    assert len(result) == 1536
+```
+
+---
+
+**Remember: Start with functions. Only add classes when you have a clear reason why the class structure provides significant benefits over functions.**
